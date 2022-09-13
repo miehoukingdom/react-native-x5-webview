@@ -10,6 +10,6 @@ class RNCWebViewPackage: ReactPackage {
   )
 
   override fun createViewManagers(reactContext: ReactApplicationContext) = listOf(
-    RNCWebViewManager(reactContext)
+    RNCWebViewManager()
   )
 }
