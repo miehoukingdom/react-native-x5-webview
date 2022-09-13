@@ -20,6 +20,11 @@ import androidx.core.util.Pair;
 
 import android.util.Log;
 import android.webkit.MimeTypeMap;
+
+import com.tencent.smtt.export.external.TbsCoreSettings;
+import com.tencent.smtt.sdk.QbSdk;
+import com.tencent.smtt.sdk.TbsDownloader;
+import com.tencent.smtt.sdk.TbsListener;
 import com.tencent.smtt.sdk.ValueCallback;
 import com.tencent.smtt.sdk.WebChromeClient;
 import android.widget.Toast;

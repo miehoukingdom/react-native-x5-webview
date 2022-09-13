@@ -20,6 +20,7 @@ import LocalPageLoad from './examples/LocalPageLoad';
 import Messaging from './examples/Messaging';
 import NativeWebpage from './examples/NativeWebpage';
 import ApplePay from './examples/ApplePay';
+import X5 from './examples/X5';
 
 const TESTS = {
   Messaging: {
@@ -101,6 +102,14 @@ const TESTS = {
     render() {
       return <ApplePay />;
     },
+  },
+  X5: {
+    title: 'X5 ',
+    testId: 'X5',
+    description: 'Test to init x5',
+    render() {
+      return <X5 />;
+    },
   }
 };
 
@@ -110,7 +119,7 @@ type State = {restarting: boolean; currentTest: Object};
 export default class App extends Component<Props, State> {
   state = {
     restarting: false,
-    currentTest: TESTS.Alerts,
+    currentTest: TESTS.X5,
   };
 
   _simulateRestart = () => {
@@ -195,6 +204,13 @@ export default class App extends Component<Props, State> {
                   title="ApplePay"
                   onPress={() => this._changeTest('ApplePay')}
               />
+          )}
+          {Platform.OS === 'android' && (
+            <Button
+              testID="testType_x5"
+              title="X5"
+              onPress={() => this._changeTest('X5')}
+            />
           )}
         </View>
 

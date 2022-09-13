@@ -37,6 +37,7 @@ import com.facebook.common.logging.FLog;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.CatalystInstance;
 import com.facebook.react.bridge.LifecycleEventListener;
+import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
@@ -79,6 +80,8 @@ import com.tencent.smtt.export.external.interfaces.WebResourceRequest;
 import com.tencent.smtt.export.external.interfaces.WebResourceResponse;
 import com.tencent.smtt.sdk.CookieManager;
 import com.tencent.smtt.sdk.DownloadListener;
+import com.tencent.smtt.sdk.QbSdk;
+import com.tencent.smtt.sdk.TbsListener;
 import com.tencent.smtt.sdk.ValueCallback;
 import com.tencent.smtt.sdk.WebChromeClient;
 import com.tencent.smtt.sdk.WebSettings;
@@ -163,7 +166,35 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   protected @Nullable String mDownloadingMessage = null;
   protected @Nullable String mLackPermissionToDownloadMessage = null;
 
-  public RNCWebViewManager() {
+  public RNCWebViewManager(ReactApplicationContext reactContext) {
+    QbSdk.setTbsListener(new TbsListener() {
+      @Override
+      public void onDownloadFinish(int i) {
+        Log.d("react-native-webview-x5", "onDownloadFinish: " + i);
+      }
+      @Override
+      public void onInstallFinish(int i) {
+        Log.d("react-native-webview-x5", "onInstallFinish: " + i);
+      }
+      @Override
+      public void onDownloadProgress(int i) {
+        Log.d("react-native-webview-x5", "onDownloadProgress:" + i);
+      }
+    });
+
+    QbSdk.setDownloadWithoutWifi(true);
+    QbSdk.setNeedInitX5FirstTime(true);
+    QbSdk.initX5Environment(reactContext, new QbSdk.PreInitCallback() {
+      @Override
+      public void onViewInitFinished(boolean success) {
+        Log.d("react-native-webview-x5", "onViewInitFinished is " + success);
+      }
+      @Override
+      public void onCoreInitFinished() {
+        Log.d("react-native-webview-x5", "onCoreInitFinished");
+      }
+    });
+
     mWebViewConfig = new WebViewConfig() {
       public void configWebView(WebView webView) {
       }
@@ -626,7 +657,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     WebView view,
     @Nullable Boolean allowsFullscreenVideo) {
     mAllowsFullscreenVideo = allowsFullscreenVideo != null && allowsFullscreenVideo;
-    setupWebChromeClient((ReactContext)view.getContext(), view);
+    setupWebChromeClient(((RNCWebView) view).getReactContext(), view);
   }
 
   @ReactProp(name = "allowFileAccess")
@@ -773,7 +804,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   @Override
   public void onDropViewInstance(WebView webView) {
     super.onDropViewInstance(webView);
-    ((ThemedReactContext) webView.getContext()).removeLifecycleEventListener((RNCWebView) webView);
+    ((RNCWebView) webView).getReactContext().removeLifecycleEventListener((RNCWebView) webView);
     ((RNCWebView) webView).cleanupCallbacksAndDestroy();
     mWebChromeClient = null;
   }
@@ -933,7 +964,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
       final RNCWebView rncWebView = (RNCWebView) view;
-      final boolean isJsDebugging = ((ReactContext) view.getContext()).getJavaScriptContextHolder().get() == 0;
+      final boolean isJsDebugging = ((RNCWebView) view).getReactContext().getJavaScriptContextHolder().get() == 0;
 
       if (!isJsDebugging && rncWebView.mCatalystInstance != null) {
         final Pair<Integer, AtomicReference<ShouldOverrideCallbackState>> lock = RNCWebViewModule.shouldOverrideUrlLoadingLock.getNewLock();
@@ -1226,7 +1257,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     @Override
     public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
 
-      final WebView newWebView = new WebView(view.getContext());
+      final WebView newWebView = new WebView(((RNCWebView) view).getReactContext());
       final WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
       transport.setWebView(newWebView);
       resultMsg.sendToTarget();
@@ -1501,6 +1532,11 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     protected boolean hasScrollEvent = false;
     protected boolean nestedScrollEnabled = false;
     protected ProgressChangedFilter progressChangedFilter;
+    private ThemedReactContext reactContext;
+
+    public ThemedReactContext getReactContext() {
+      return this.reactContext;
+    }
 
     /**
      * WebView must be created with an context of the current activity
@@ -1509,8 +1545,9 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
      * Reactive Native needed for access to ReactNative internal system functionality
      */
     public RNCWebView(ThemedReactContext reactContext) {
-      super(reactContext);
-      this.createCatalystInstance();
+      super(reactContext.getCurrentActivity());
+      this.reactContext = reactContext;
+      this.createCatalystInstance(reactContext);
       progressChangedFilter = new ProgressChangedFilter();
     }
 
@@ -1617,9 +1654,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
       return new RNCWebViewBridge(webView);
     }
 
-    protected void createCatalystInstance() {
-      ReactContext reactContext = (ReactContext) this.getContext();
-
+    protected void createCatalystInstance(ReactContext reactContext) {
       if (reactContext != null) {
         mCatalystInstance = reactContext.getCatalystInstance();
       }
@@ -1675,7 +1710,6 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     }
 
     public void onMessage(String message) {
-      ReactContext reactContext = (ReactContext) this.getContext();
       RNCWebView mContext = this;
 
       if (mRNCWebViewClient != null) {
@@ -1747,7 +1781,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     }
 
     protected void dispatchEvent(WebView webView, Event event) {
-      ReactContext reactContext = (ReactContext) webView.getContext();
+      ReactContext reactContext = ((RNCWebView) webView).getReactContext();
       EventDispatcher eventDispatcher =
         reactContext.getNativeModule(UIManagerModule.class).getEventDispatcher();
       eventDispatcher.dispatchEvent(event);
