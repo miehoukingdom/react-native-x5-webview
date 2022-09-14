@@ -494,7 +494,7 @@ public class RNCWebViewModule extends ReactContextBaseJavaModule implements Acti
 
     // for versions 6.0+ (23) we use the FileProvider to avoid runtime permissions
     String packageName = getReactApplicationContext().getPackageName();
-    return FileProvider.getUriForFile(getReactApplicationContext(), packageName + ".fileprovider", capturedFile);
+    return FileProvider.getUriForFile(getReactApplicationContext(), packageName + ".provider", capturedFile);
   }
 
   private File getCapturedFile(MimeType mimeType) throws IOException {

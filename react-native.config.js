@@ -31,7 +31,7 @@ const project = (() => {
 module.exports = {
   dependencies: {
     // Help rn-cli find and autolink this library
-    'react-native-webview': {
+    'react-native-x5-webview': {
       root: __dirname,
     },
   },

@@ -69,6 +69,7 @@ import com.reactnativecommunity.webview.events.TopLoadingStartEvent;
 import com.reactnativecommunity.webview.events.TopMessageEvent;
 import com.reactnativecommunity.webview.events.TopRenderProcessGoneEvent;
 import com.reactnativecommunity.webview.events.TopShouldStartLoadWithRequestEvent;
+import com.tencent.smtt.export.external.TbsCoreSettings;
 import com.tencent.smtt.export.external.interfaces.ConsoleMessage;
 import com.tencent.smtt.export.external.interfaces.GeolocationPermissionsCallback;
 import com.tencent.smtt.export.external.interfaces.HttpAuthHandler;
@@ -167,6 +168,11 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   protected @Nullable String mLackPermissionToDownloadMessage = null;
 
   public RNCWebViewManager(ReactApplicationContext reactContext) {
+    HashMap map = new HashMap();
+    map.put(TbsCoreSettings.TBS_SETTINGS_USE_SPEEDY_CLASSLOADER, true);
+    map.put(TbsCoreSettings.TBS_SETTINGS_USE_DEXLOADER_SERVICE, true);
+    QbSdk.initTbsSettings(map);
+
     QbSdk.setTbsListener(new TbsListener() {
       @Override
       public void onDownloadFinish(int i) {
@@ -182,6 +188,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
       }
     });
 
+    
     QbSdk.setDownloadWithoutWifi(true);
     QbSdk.setNeedInitX5FirstTime(true);
     QbSdk.initX5Environment(reactContext, new QbSdk.PreInitCallback() {
