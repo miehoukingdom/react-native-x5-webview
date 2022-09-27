@@ -83,7 +83,7 @@
     "lib",
     "index.js",
     "index.d.ts",
-    "react-native-webview.podspec",
+    "react-native-x5-webview.podspec",
     "react-native.config.js"
   ]
 }
