@@ -9,6 +9,7 @@
 #import <React/RCTConvert.h>
 #import <React/RCTAutoInsetsProtocol.h>
 #import "RNCWKProcessPoolManager.h"
+#import "RNCWKSchemeHandler.h"
 #if !TARGET_OS_OSX
 #import <UIKit/UIKit.h>
 #else
@@ -68,7 +69,8 @@ NSString *const CUSTOM_SELECTOR = @"_CUSTOM_SELECTOR_";
 #if !TARGET_OS_OSX
 UIScrollViewDelegate,
 #endif // !TARGET_OS_OSX
-RCTAutoInsetsProtocol>
+RCTAutoInsetsProtocol,
+RNCWKSchemeHandlerDelegate>
 
 @property (nonatomic, copy) RCTDirectEventBlock onFileDownload;
 @property (nonatomic, copy) RCTDirectEventBlock onLoadingStart;
@@ -77,6 +79,7 @@ RCTAutoInsetsProtocol>
 @property (nonatomic, copy) RCTDirectEventBlock onLoadingProgress;
 @property (nonatomic, copy) RCTDirectEventBlock onShouldStartLoadWithRequest;
 @property (nonatomic, copy) RCTDirectEventBlock onHttpError;
+@property (nonatomic, copy) RCTDirectEventBlock onUrlSchemeRequest;
 @property (nonatomic, copy) RCTDirectEventBlock onMessage;
 @property (nonatomic, copy) RCTDirectEventBlock onScroll;
 @property (nonatomic, copy) RCTDirectEventBlock onContentProcessDidTerminate;
@@ -394,6 +397,12 @@ RCTAutoInsetsProtocol>
   wkWebViewConfig.mediaPlaybackRequiresUserAction = _mediaPlaybackRequiresUserAction;
 #endif
 #endif // !TARGET_OS_OSX
+
+  if (_urlScheme) {
+    self.schemeHandler = [[RNCWKSchemeHandler alloc] init];
+    [wkWebViewConfig setURLSchemeHandler:self.schemeHandler forURLScheme:_urlScheme];
+    self.schemeHandler.delegate = self;
+  }
   
   if (_applicationNameForUserAgent) {
     wkWebViewConfig.applicationNameForUserAgent = [NSString stringWithFormat:@"%@ %@", wkWebViewConfig.applicationNameForUserAgent, _applicationNameForUserAgent];
@@ -847,6 +856,18 @@ RCTAutoInsetsProtocol>
 #if !TARGET_OS_OSX
   _webView.scrollView.scrollEnabled = scrollEnabled;
 #endif // !TARGET_OS_OSX
+  // Override the scrollView delegate to prevent scrolling.
+  if (!scrollEnabled) {
+    _webView.scrollView.delegate = self;
+  } else {
+    _webView.scrollView.delegate = _webView;
+  }
+}
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView
+{
+  // Don't allow scrolling the scrollView.
+  scrollView.bounds = _webView.bounds;
 }
 
 #if !TARGET_OS_OSX
@@ -1425,6 +1446,23 @@ didFinishNavigation:(WKNavigation *)navigation
   _webView.scrollView.bounces = _pullToRefreshEnabled || bounces;
 }
 #endif // !TARGET_OS_OSX
+
+// Send event to React Native.
+- (void)handleUrlSchemeRequest:(NSDictionary *)req
+{
+  _onUrlSchemeRequest(req);
+}
+
+
+// Receive event to React Native.
+- (void)handleUrlSchemeResponse:(NSDictionary *)resp
+{
+  if (self.schemeHandler) {
+    [self.schemeHandler handleUrlSchemeResponse:resp];
+  } else {
+    RCTLogError(@"Calling handleUrlSchemeResponse without a scheme handler.");
+  }
+}
 
 - (void)setInjectedJavaScript:(NSString *)source {
   _injectedJavaScript = source;

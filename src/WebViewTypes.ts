@@ -142,6 +142,13 @@ export interface WebViewRenderProcessGoneDetail {
   didCrash: boolean;
 }
 
+export interface WebViewUrlSchemeRequest {
+  url: string;
+  method: string;
+  headers: Record<string, string>;
+  requestId: string;
+};
+
 export type WebViewEvent = NativeSyntheticEvent<WebViewNativeEvent>;
 
 export type WebViewProgressEvent =
@@ -157,6 +164,9 @@ export type FileDownloadEvent = NativeSyntheticEvent<FileDownload>;
 export type WebViewMessageEvent = NativeSyntheticEvent<WebViewMessage>;
 
 export type WebViewErrorEvent = NativeSyntheticEvent<WebViewError>;
+
+export type WebViewUrlSchemeRequestEvent =
+  NativeSyntheticEvent<WebViewUrlSchemeRequest>;
 
 export type WebViewTerminatedEvent = NativeSyntheticEvent<WebViewNativeEvent>;
 
@@ -179,6 +189,29 @@ export type DataDetectorTypes =
   | 'all';
 
 export type OverScrollModeType = 'always' | 'content' | 'never';
+
+export interface UrlSchemeResponse {
+  type: 'response';
+  url: string;
+  status: number;
+  headers: Record<string, string>;
+  body?: string;
+}
+
+export interface UrlSchemeFile {
+  type: 'file';
+  file: string;
+  url: string;
+  headers: Record<string, string>;
+}
+
+export interface UrlSchemeRedirect {
+  type: 'redirect';
+  url: string;
+  method: string;
+  headers: Record<string, string>;
+  body?: string;
+}
 
 export type CacheMode =
   | 'LOAD_DEFAULT'
@@ -386,6 +419,8 @@ export interface IOSNativeWebViewProps extends CommonNativeWebViewProps {
   limitsNavigationsToAppBoundDomains?: boolean;
   textInteractionEnabled?: boolean;
   mediaCapturePermissionGrantType?: MediaCapturePermissionGrantType;
+	urlScheme?: string;
+	onUrlSchemeRequest?: (event: WebViewUrlSchemeRequestEvent) => void;
 }
 
 export interface MacOSNativeWebViewProps extends CommonNativeWebViewProps {
@@ -571,6 +606,20 @@ export interface IOSWebViewProps extends WebViewSharedProps {
    * @platform ios
    */
   allowsLinkPreview?: boolean;
+
+  /**
+   * Specify a url scheme to intercept.
+   */
+  urlScheme?: string;
+
+  /**
+   * Intercept a url scheme request. If you return a status, that means this is a response. If there
+   * is a method, that means that we should make the request from native code and pipe it. This is
+   * useful for requests such as images that won't encode well.
+   */
+  onUrlSchemeRequest?: (
+    event: WebViewUrlSchemeRequest,
+  ) => Promise<UrlSchemeResponse | UrlSchemeRedirect | UrlSchemeFile>;
 
   /**
    * Set true if shared cookies from HTTPCookieStorage should used for every load request.
@@ -1051,6 +1100,34 @@ export interface AndroidWebViewProps extends WebViewSharedProps {
    * @platform android
    */
   mixedContentMode?: 'never' | 'always' | 'compatibility';
+
+  /**
+   * A Base URL that is intercepted and sent through onUrlSchemeRequest. Android has a few issues
+   * with custom schemes, using a baseInterceptURL instead.
+   */
+  baseInterceptUrl?: string;
+
+  /**
+   * Intercept a url scheme request. If you return a status, that means this is a response. If there
+   * is a method, that means that we should make the request from native code and pipe it. This is
+   * useful for requests such as images that won't encode well.
+   */
+  onUrlSchemeRequest?: (
+    event: WebViewUrlSchemeRequest,
+  ) => Promise<UrlSchemeResponse | UrlSchemeRedirect | UrlSchemeFile>;
+
+  /**
+   * Configuration for the HTTP Client that is used when using UrlSchemeRedirect.
+   */
+  httpClientConfig?: {
+    followSslRedirects?: boolean;
+    followRedirects?: boolean;
+    retryOnConnectionFailure?: boolean;
+    connectTimeoutMs?: number;
+    readTimeoutMs?: number;
+    writeTimeoutMs?: number;
+    pingIntervalMs?: number;
+  };
 
   /**
    * Sets ability to open fullscreen videos on Android devices.

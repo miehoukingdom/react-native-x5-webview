@@ -8,6 +8,7 @@
 #import <React/RCTView.h>
 #import <React/RCTDefines.h>
 #import <WebKit/WebKit.h>
+#import "RNCWKSchemeHandler.h"
 
 typedef enum RNCWebViewPermissionGrantType : NSUInteger {
   RNCWebViewPermissionGrantType_GrantIfSameHost_ElsePrompt,
@@ -81,6 +82,8 @@ shouldStartLoadForRequest:(NSMutableDictionary<NSString *, id> *_Nonnull)request
 @property (nonatomic, assign) BOOL enableApplePay;
 @property (nonatomic, copy) NSArray<NSDictionary *> * _Nullable menuItems;
 @property (nonatomic, copy) RCTDirectEventBlock onCustomMenuSelection;
+@property (nonatomic, copy) NSString *urlScheme;
+@property (nonatomic, strong) RNCWKSchemeHandler* schemeHandler;
 #if !TARGET_OS_OSX
 @property (nonatomic, weak) UIRefreshControl * _Nullable refreshControl;
 #endif
@@ -110,6 +113,8 @@ shouldStartLoadForRequest:(NSMutableDictionary<NSString *, id> *_Nonnull)request
 - (void)reload;
 - (void)stopLoading;
 - (void)requestFocus;
+- (void)handleUrlSchemeResponse:(NSDictionary *)resp;
+- (void)handleUrlSchemeRequest:(NSDictionary *)req;
 #if !TARGET_OS_OSX
 - (void)addPullToRefreshControl;
 - (void)pullToRefresh:(UIRefreshControl *_Nonnull)refreshControl;

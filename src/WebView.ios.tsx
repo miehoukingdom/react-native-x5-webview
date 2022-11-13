@@ -21,6 +21,7 @@ import {
   DecelerationRateConstant,
   NativeWebViewIOS,
   ViewManager,
+  WebViewUrlSchemeRequestEvent
 } from './WebViewTypes';
 
 import styles from './WebView.styles';
@@ -29,7 +30,7 @@ import styles from './WebView.styles';
 const codegenNativeCommands = codegenNativeCommandsUntyped as <T extends {}>(options: { supportedCommands: (keyof T)[] }) => T;
 
 const Commands = codegenNativeCommands({
-  supportedCommands: ['goBack', 'goForward', 'reload', 'stopLoading', 'injectJavaScript', 'requestFocus', 'postMessage', 'loadUrl'],
+  supportedCommands: ['goBack', 'goForward', 'reload', 'stopLoading', 'injectJavaScript', 'requestFocus', 'postMessage', 'loadUrl', 'handleUrlSchemeResponse'],
 });
 
 const { resolveAssetSource } = Image;
@@ -89,6 +90,8 @@ const WebViewComponent = forwardRef<{}, IOSWebViewProps>(({
   incognito,
   decelerationRate: decelerationRateProp,
   onShouldStartLoadWithRequest: onShouldStartLoadWithRequestProp,
+  urlScheme,
+  onUrlSchemeRequest: onUrlSchemeRequestProp,
   ...otherProps
 }, ref) => {
   const webViewRef = useRef<NativeWebViewIOS | null>(null);
@@ -120,6 +123,17 @@ const WebViewComponent = forwardRef<{}, IOSWebViewProps>(({
     onShouldStartLoadWithRequestCallback,
     onContentProcessDidTerminateProp,
   });
+
+  const onUrlSchemeRequest = useCallback((event: WebViewUrlSchemeRequestEvent) => {
+    if (!onUrlSchemeRequestProp) {
+      throw new Error("Must provide `onUrlSchemeRequest` if you provide `urlScheme`.");
+    }
+    const { requestId } = event.nativeEvent
+    onUrlSchemeRequestProp(event.nativeEvent)
+      .then((response) => {
+        Commands.handleUrlSchemeResponse(webViewRef.current, { ...response, requestId });
+      })
+  }, [onUrlSchemeRequestProp])
 
   useImperativeHandle(ref, () => ({
     goForward: () => Commands.goForward(webViewRef.current),
@@ -197,6 +211,8 @@ const WebViewComponent = forwardRef<{}, IOSWebViewProps>(({
       // TODO: find a better way to type this.
       source={resolveAssetSource(source as ImageSourcePropType)}
       style={webViewStyles}
+      urlScheme={urlScheme}
+      onUrlSchemeRequest={onUrlSchemeRequest}
       {...nativeConfig?.props}
     />
   );
