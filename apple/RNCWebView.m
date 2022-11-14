@@ -864,12 +864,6 @@ RNCWKSchemeHandlerDelegate>
   }
 }
 
-- (void)scrollViewDidScroll:(UIScrollView *)scrollView
-{
-  // Don't allow scrolling the scrollView.
-  scrollView.bounds = _webView.bounds;
-}
-
 #if !TARGET_OS_OSX
 // UIScrollViewDelegate method
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
