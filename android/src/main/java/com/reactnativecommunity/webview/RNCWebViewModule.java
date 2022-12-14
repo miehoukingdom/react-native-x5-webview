@@ -133,6 +133,44 @@ public class RNCWebViewModule extends ReactContextBaseJavaModule implements Acti
   }
 
   @ReactMethod
+  public void initX5(final Promise promise) {
+    HashMap map = new HashMap();
+    map.put(TbsCoreSettings.TBS_SETTINGS_USE_SPEEDY_CLASSLOADER, true);
+    map.put(TbsCoreSettings.TBS_SETTINGS_USE_DEXLOADER_SERVICE, true);
+    QbSdk.initTbsSettings(map);
+
+    QbSdk.setTbsListener(new TbsListener() {
+      @Override
+      public void onDownloadFinish(int i) {
+        Log.d("react-native-webview-x5", "onDownloadFinish: " + i);
+      }
+      @Override
+      public void onInstallFinish(int i) {
+        Log.d("react-native-webview-x5", "onInstallFinish: " + i);
+      }
+      @Override
+      public void onDownloadProgress(int i) {
+        Log.d("react-native-webview-x5", "onDownloadProgress:" + i);
+      }
+    });
+
+    
+    QbSdk.setDownloadWithoutWifi(true);
+    QbSdk.setNeedInitX5FirstTime(true);
+    QbSdk.initX5Environment(getCurrentActivity(), new QbSdk.PreInitCallback() {
+      @Override
+      public void onViewInitFinished(boolean success) {
+        Boolean result = success;
+        promise.resolve(result);
+      }
+      @Override
+      public void onCoreInitFinished() {
+        Log.d("react-native-webview-x5", "onCoreInitFinished");
+      }
+    });
+  }
+
+  @ReactMethod
   public void isFileUploadSupported(final Promise promise) {
     Boolean result = false;
     int current = Build.VERSION.SDK_INT;

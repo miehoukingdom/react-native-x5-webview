@@ -81,8 +81,6 @@ import com.tencent.smtt.export.external.interfaces.WebResourceRequest;
 import com.tencent.smtt.export.external.interfaces.WebResourceResponse;
 import com.tencent.smtt.sdk.CookieManager;
 import com.tencent.smtt.sdk.DownloadListener;
-import com.tencent.smtt.sdk.QbSdk;
-import com.tencent.smtt.sdk.TbsListener;
 import com.tencent.smtt.sdk.ValueCallback;
 import com.tencent.smtt.sdk.WebChromeClient;
 import com.tencent.smtt.sdk.WebSettings;
@@ -168,40 +166,6 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   protected @Nullable String mLackPermissionToDownloadMessage = null;
 
   public RNCWebViewManager(ReactApplicationContext reactContext) {
-    HashMap map = new HashMap();
-    map.put(TbsCoreSettings.TBS_SETTINGS_USE_SPEEDY_CLASSLOADER, true);
-    map.put(TbsCoreSettings.TBS_SETTINGS_USE_DEXLOADER_SERVICE, true);
-    QbSdk.initTbsSettings(map);
-
-    QbSdk.setTbsListener(new TbsListener() {
-      @Override
-      public void onDownloadFinish(int i) {
-        Log.d("react-native-webview-x5", "onDownloadFinish: " + i);
-      }
-      @Override
-      public void onInstallFinish(int i) {
-        Log.d("react-native-webview-x5", "onInstallFinish: " + i);
-      }
-      @Override
-      public void onDownloadProgress(int i) {
-        Log.d("react-native-webview-x5", "onDownloadProgress:" + i);
-      }
-    });
-
-    
-    QbSdk.setDownloadWithoutWifi(true);
-    QbSdk.setNeedInitX5FirstTime(true);
-    QbSdk.initX5Environment(reactContext, new QbSdk.PreInitCallback() {
-      @Override
-      public void onViewInitFinished(boolean success) {
-        Log.d("react-native-webview-x5", "onViewInitFinished is " + success);
-      }
-      @Override
-      public void onCoreInitFinished() {
-        Log.d("react-native-webview-x5", "onCoreInitFinished");
-      }
-    });
-
     mWebViewConfig = new WebViewConfig() {
       public void configWebView(WebView webView) {
       }

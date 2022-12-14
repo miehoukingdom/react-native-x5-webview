@@ -206,8 +206,8 @@ const WebViewComponent = forwardRef<{}, AndroidWebViewProps>(({
 });
 
 // native implementation should return "true" only for Android 5+
-const {isFileUploadSupported} = NativeModules.RNCWebView;
+const {isFileUploadSupported, initX5} = NativeModules.RNCWebView;
 
-const WebView = Object.assign(WebViewComponent, {isFileUploadSupported});
+const WebView = Object.assign(WebViewComponent, {isFileUploadSupported, initX5});
 
 export default WebView;
